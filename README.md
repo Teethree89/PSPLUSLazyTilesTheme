@@ -7,7 +7,15 @@ The theme introduces the following changes:
 * Sticky headers for game sections on scroll
 * Game search with live result update
 * Move play history to the top
+* Move Your List to the top
 * Display platform badge
+* Made search bar shorter and improved search
+* Added category click search
+* Lazy load of images for speed
+* Dynamic resizer for consitent content heights
+* Gradient background vs slow image load bg
+* Transitions between controller/mouse mode better
+* Generally way faster
 
 Tested on the UK locale.
 
