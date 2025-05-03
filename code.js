@@ -264,7 +264,9 @@ const newStyle = document.createElement('style');
                 
                 wrapper.appendChild(input);
 
-                catalogList.prepend(wrapper); // or your container
+                if (!document.getElementById('psp-toolbar')) {
+                    catalogList.prepend(wrapper);
+                }
 
                 PSPP_RemoveDuplicates();
                 await PSPP_LoadGameNames();
@@ -276,7 +278,15 @@ const newStyle = document.createElement('style');
                 
                 input.addEventListener('input', () => {
                     const v = input.value.toLowerCase().trim();
-                
+
+                    // Hide or show elements based on input
+                    const classesToHide = ['.MYLIST', '.PLAYHISTORY']; // Add more if needed
+                    classesToHide.forEach(selector => {
+                        document.querySelectorAll(selector).forEach(el => {
+                            el.style.display = v ? 'none' : 'block';
+                        });
+                    });
+
                     // First filter the games
                     games.forEach((game) => {
                         const wrapper = game.closest('.tile-wrapper') || game;
@@ -425,7 +435,8 @@ const newStyle = document.createElement('style');
                             observer.disconnect(); // Stop watching after triggering
         
                             setTimeout(() => {
-                                window.location.reload();
+                                //window.location.reload();
+                                  PSPP_WaitForCatalogListLoad();
                             }, 200); // small safe delay
                         }
                     }
@@ -480,7 +491,6 @@ const newStyle = document.createElement('style');
 
         function monitorCatalogMutations() {
             const catalogList = document.querySelector('.catalog-list') || document.querySelector('#app-outlet');
-        
             if (!catalogList) return;
         
             const config = { childList: true, subtree: true };
@@ -489,9 +499,12 @@ const newStyle = document.createElement('style');
                 for (const mutation of mutationsList) {
                     if (mutation.type === 'childList') {
                         const addedOrRemoved = [...mutation.addedNodes, ...mutation.removedNodes];
-                        if (addedOrRemoved.some(node => node.nodeType === 1 && (node.classList.contains('MYLIST') || node.classList.contains('PLAYHISTORY')))) {
+                        if (addedOrRemoved.some(node =>
+                            node.nodeType === 1 &&
+                            (node.classList.contains('MYLIST') || node.classList.contains('PLAYHISTORY'))
+                        )) {
                             console.log('Detected MYLIST or PLAYHISTORY recreated. Reloading catalog...');
-                            PSPP_AssignCategoryIds(Array.from(document.querySelectorAll('.category-tile')))
+                            PSPP_AssignCategoryIds(Array.from(document.querySelectorAll('.category-tile')));
                             PSPP_WrapTilesAndObserve();
                             break;
                         }
@@ -500,10 +513,33 @@ const newStyle = document.createElement('style');
             };
         
             const observer = new MutationObserver(callback);
-        
             observer.observe(catalogList, config);
         }
         
+        setInterval(() => {
+            const sliders = document.querySelectorAll('.slider');
+        
+            sliders.forEach(slider => {
+                const seen = new Set();
+        
+                const wrappers = Array.from(slider.querySelectorAll('.tile-wrapper'));
+                wrappers.forEach(wrapper => {
+                    const gameDiv = wrapper.querySelector('[data-game]');
+                    if (!gameDiv) return;
+        
+                    const gameId = gameDiv.getAttribute('data-game');
+                    if (!gameId) return;
+        
+                    if (seen.has(gameId)) {
+                        wrapper.remove(); // remove duplicate tile-wrapper
+                    } else {
+                        seen.add(gameId);
+                    }
+                });
+            });
+        }, 250); // Run every 1 second
+        
+
         window.addEventListener('resize', updateWrapperHeights);
         document.querySelector('body').appendChild(newStyle);
     };
@@ -566,18 +602,22 @@ const newStyle = document.createElement('style');
     // Sliders have duplicates, so we need to remove them
     const PSPP_RemoveDuplicates = () => {
         const sliders = Array.from(document.querySelectorAll('.games-list .slider'));
+        console.log('Removing Duplicates...');
         sliders.forEach((slider) => {
-            const ids = [];
-            const children = Array.from(slider.children);
-            children.forEach((entry) => {
+            const ids = new Set();
+            const entries = Array.from(slider.children); // snapshot before modifying DOM
+    
+            entries.forEach((entry) => {
                 const id = entry.getAttribute('data-game');
-                if (ids.includes(id)) {
+                if (!id) return;
+    
+                if (ids.has(id)) {
                     entry.remove();
                 } else {
-                    ids.push(id);
+                    ids.add(id);
                 }
             });
         });
-    }
+    };
 
     document.addEventListener("DOMContentLoaded", PSPP_WaitForCatalogListLoad);
