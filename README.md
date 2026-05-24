@@ -17,6 +17,10 @@ The theme introduces the following changes:
 * Transitions between controller/mouse mode better
 * Generally way faster
 
+If this saves you a little time, [buy me a coffee](https://paypal.me/ABPaintball/5).
+
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-$5%20PayPal-00457C?logo=paypal)](https://paypal.me/ABPaintball/5)
+
 Tested on the UK locale.
 
 ## Demo
